@@ -1,0 +1,975 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Whiteout Survival Hunting Trap Squad Calculator</title>
+    <style>
+        body {
+            font-family: sans-serif;
+        }
+
+        label {
+            display: block;
+            margin-top: 10px;
+        }
+
+        input[type="number"], select {
+            width: 100px;
+        }
+
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin-top: 20px;
+        }
+
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #f2f2f2;
+        }
+
+        .error {
+            color: red;
+            font-weight: bold;
+        }
+		.hero-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr); /* 4 columns */
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .hero-icon {
+            border: 1px solid #ddd;
+            padding: 5px;
+            text-align: center;
+            cursor: grab; /* Indicate draggable */
+        }
+		 .hero-icon img {
+            width: 50px; /* Adjust as needed */
+            height: 50px; /* Adjust as needed */
+            display: block;
+            margin: 0 auto;
+        }
+        .squad {
+            border: 2px solid #ccc;
+            margin-bottom: 20px;
+            padding: 10px;
+        }
+
+        .hero-slot {
+            width: 60px; /* Slightly larger than hero icon */
+            height: 60px; /* Slightly larger than hero icon */
+            border: 1px dashed #888;
+            margin: 5px;
+            display: inline-block; /* Arrange slots horizontally */
+			vertical-align: top;
+            position: relative; /* Important for positioning the removal button */
+        }
+		.hero-slot.occupied {
+			border: 1px solid blue;
+		}
+
+		#resultsTable {
+			display: none;
+		}
+        .remove-hero {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            width: 20px;
+            height: 20px;
+            background-color: red;
+            color: white;
+            border-radius: 50%; /* Make it circular */
+            text-align: center;
+            line-height: 20px;
+            cursor: pointer;
+            font-size: 12px;
+            display: none; /* Initially hidden */
+        }
+
+        .hero-slot.occupied .remove-hero {
+            display: block; /* Show on occupied slots */
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Whiteout Survival Hunting Trap Squad Calculator</h1>
+
+    <h2>Troop Input</h2>
+    <label for="troopType">Troop Type:</label>
+    <select id="troopType">
+        <option value="Infantry">Infantry</option>
+        <option value="Lancer">Lancer</option>
+        <option value="Marksman">Marksman</option>
+    </select>
+    <label for="troopCount">Count:</label>
+    <input type="number" id="troopCount" min="0" value="0">
+    <label for="troopLevel">Level:</label>
+    <select id="troopLevel">
+        <option value="1">1</option>
+        <option value="2">2</option>
+        <option value="3">3</option>
+        <option value="4">4</option>
+        <option value="5">5</option>
+        <option value="6">6</option>
+        <option value="7">7</option>
+        <option value="8">8</option>
+        <option value="9">9</option>
+        <option value="10">10</option>
+        <option value="11">11</option>
+    </select>
+    <button onclick="addTroop()">Add Troop</button>
+    <div id="troopError" class="error"></div>
+
+    <h3>Current Troops</h3>
+    <table id="troopTable">
+        <thead>
+            <tr>
+                <th>Type</th>
+                <th>Count</th>
+                <th>Level</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            </tbody>
+    </table>
+
+	<h2>Hero Roster</h2>
+	 <div class="hero-grid" id="heroGrid">
+        </div>
+
+    <h2>Squad Definition</h2>
+    <div id="squadsContainer">
+        </div>
+    <button onclick="addSquad()">Add Squad</button>
+    <div id="squadError" class="error"></div>
+	
+    <label for="beastType">Beast Type:</label>
+	<select id="beastType" onchange="updateSuggestedRatio()">
+		<option value="General">General</option>
+		<option value="Mammoth">Mammoth</option>
+		<option value="Rhino">Rhino</option>
+		<option value="Tiger">Tiger</option>
+		<option value="Ape">Ape</option>
+		<option value="Bear">Bear</option>
+	</select>
+
+    <label for="troopRatio">Desired Troop Ratio (Infantry:Lancer:Marksman):</label>
+    <input type="text" id="troopRatio" value="9:31:60">
+    <div id="ratioError" class="error"></div>
+
+    <button onclick="calculateSquads()">Calculate Squads</button>
+
+    <h2>Results</h2>
+	 <table id="resultsTable">
+        <thead>
+            <tr>
+                <th>Squad Name</th>
+                <th>Max Size</th>
+                <th>Heroes</th>
+                <th>Infantry</th>
+				<th>Lancer</th>
+				<th>Marksman</th>
+            </tr>
+        </thead>
+        <tbody id="resultsBody">
+            </tbody>
+    </table>
+  
+
+    <button onclick="exportData()">Export Data</button>
+    <button onclick="importData()">Import Data</button>
+	<input type="file" id="importFile" style="display: none;" accept=".json">
+    <div id="importError" class="error"></div>
+
+
+    <script>
+        let troops = [];
+        let squads = [];
+        let heroData = {
+            "Natalia": { name: "Natalia", type: "Infantry", image: "https://drive.google.com/file/d/1i4d1-KE5Sz5S4EqzwH6Fe_9ZvRgIJGI6/view?usp=sharing" },
+            "Sergey": { name: "Sergey", type: "Infantry", image: "https://drive.google.com/file/d/1yWDj333cLwVClc98l-iVp1hNg5x8wZaE/view?usp=sharing" },
+            "Jasser": { name: "Jasser", type: "Marksman", image: "https://drive.google.com/file/d/15c0Z63yZgi6Ik3jwED_F6BF2L2DYXnLX/view?usp=sharing" },
+            "Molly": { name: "Molly", type: "Lancer", image: "" }, // Add image URL if available
+            "Bahiti": { name: "Bahiti", type: "Marksman", image: "https://drive.google.com/file/d/1dTjv-a2aOlJ8TnIa3JVMVGxTGJiCoHjj/view?usp=sharing" },
+            "Zinman": { name: "Zinman", type: "Marksman", image: "https://drive.google.com/file/d/1nA7XATmyfBgLNLCTUqN0IeP5KD6qIIvS/view?usp=sharing" },
+            "Chef": { name: "Chef", type: "Infantry", image: "" },  // Add image
+            "Buster": { name: "Buster", type: "Infantry", image: "" }, //add image
+            "Cloris": { name: "Cloris", type: "Marksman", image: "https://drive.google.com/file/d/1i3RhXv-kXCfOhpnP7EGFBcf4aCARiW9N/view?usp=sharing" },
+            "Smith": { name: "Smith", type: "Infantry", image: "https://drive.google.com/file/d/1Xb2s-g9VMeZJ1lanJlbYhJFdrROB5jNj/view?usp=sharing" },
+            "Alisa": { name: "Alisa", type: "Infantry", image: "" },  //add image
+            "Charlie": { name: "Charlie", type: "Lancer", image: "https://drive.google.com/file/d/10GHmDLVqKEWlDJ_ofL1Y_CX7HUN0ZcHz/view?usp=sharing" },
+            "Patrick": { name: "Patrick", type: "Infantry", image: "https://drive.google.com/file/d/1ItOsmi7ejXt-eFZRR_3ynddE6SPwS4d0/view?usp=sharing" },
+            "Bradley": { name: "Bradley", type: "Marksman", image: "" }, //add image
+            "Edith": { name: "Edith", type: "Infantry", image: "" },   //add image
+            "Hector": { name: "Hector", type: "Infantry", image: "https://drive.google.com/file/d/1WbxnfTdaM9HWtoATCtF35UENH8c0iWKe/view?usp=sharing" },
+            "Lynn": { name: "Lynn", type: "Marksman", image: "https://drive.google.com/file/d/1ANrvDcMOkcaYr1j0Mf96Y_pfjvVBpG5t/view?usp=sharing" },
+            "Mia": { name: "Mia", type: "Lancer", image: "https://drive.google.com/file/d/1nXJhv_6qfndRZ8HjdQIOqgGXswZAY8kK/view?usp=sharing" },
+            "Logan": { name: "Logan", type: "Infantry", image: "https://drive.google.com/file/d/1dEkeuwXTzz-_TONPBBLE8IuUYugKUocz/view?usp=sharing" },
+            "Renee": { name: "Renee", type: "Lancer", image: "https://drive.google.com/file/d/1j10mCQrZCahKT2-818_-UPblZEymPhyA/view?usp=sharing" },
+            "Jeronimo": { name: "Jeronimo", type: "Infantry", image: "https://drive.google.com/file/d/1roYgMfNwPRCi7IapaKspZziny4iAi9Yx/view?usp=sharing" },
+            "Wu Ming": { name: "Wu Ming", type: "Infantry", image: "https://drive.google.com/file/d/108NmCUC7X6ZlnJDryhb20u9wik7oR5F_/view?usp=sharing" },
+            "Wayne": { name: "Wayne", type: "Marksman", image: "https://drive.google.com/file/d/1ucs5kyTemWemcfgXHTo_2V19oulPYFWj/view?usp=sharing" },
+            "Norah": { name: "Norah", type: "Lancer", image: "https://drive.google.com/file/d/1unltvsFPxFHgoB71R2q8CKooz-ukc9lM/view?usp=sharing" },
+            "Ahmose": { name: "Ahmose", type: "Infantry", image: "https://drive.google.com/file/d/1JW6ZMcG-83xLnMxZVqQ25CYINgaDuYdo/view?usp=sharing" },
+            "Philly": { name: "Philly", type: "Lancer", image: "https://drive.google.com/file/d/1rhoC9VKNyp-IAecu4g2Fz0SIrlq6m1Pl/view?usp=sharing" },
+            "Gwen": { name: "Gwen", type: "Marksman", image: "https://drive.google.com/file/d/1HkWDY3UxdG0gD-d8yFmX5AqpH65z76PL/view?usp=sharing" },
+            "Reina": { name: "Reina", type: "Lancer", image: "https://drive.google.com/file/d/19D4mkJKcpd2XX0Whg6VzEELiqhW2MKHy/view?usp=sharing" },
+            "Gordon": { name: "Gordon", type: "Lancer", image: "" },  //add image
+            "Greg": { name: "Greg", type: "Marksman", image: "https://drive.google.com/file/d/1WvT2ILMs_vEDSsWHKyS9I-QI_Wi3CAXV/view?usp=sharing" },
+            "Flint": { name: "Flint", type: "Infantry", image: "https://drive.google.com/file/d/1jNfjkO-VwWLqXSBSpPCYBZyk_TqMhh1e/view?usp=sharing" },
+            "Alonso": { name: "Alonso", type: "Marksman", image: "https://drive.google.com/file/d/10Zy7AFRiNU-OSLjqpBbezQvL-Q1LyBKX/view?usp=sharing" },
+            "Seo-yoon": { name: "Seo-yoon", type: "Marksman", image: "https://drive.google.com/file/d/1rqrsmJxGAJU-CIleXOOtiocPacPN7XZE/view?usp=sharing" },
+            "Walis Bokan": { name: "Walis Bokan", type: "Lancer", image: "https://drive.google.com/file/d/1i97Y_-wjHpq-zqAbG-Uf1Ss-0OqG216W/view?usp=sharing" },
+            "Jessie": { name: "Jessie", type: "Lancer", image: "https://drive.google.com/file/d/1P_jbvq_hKPZXdlDYWVOIA4Df_qtfi_0A/view?usp=sharing" },
+            "Gina": { name: "Gina", type: "Marksman", image: "https://drive.google.com/file/d/1l0to7sgvgF7HtpXf0YJeEDQgIb7H9EhQ/view?usp=sharing" },
+            "Eugene": { name: "Eugene", type: "Infantry", image: "https://drive.google.com/file/d/1IZ7d3RHJPC0Q3n7Mtp6Qlk-oxUBE8qHi/view?usp=sharing" },
+        };
+		let heroes = {};
+
+        function addTroop() {
+            const type = document.getElementById('troopType').value;
+            const count = parseInt(document.getElementById('troopCount').value);
+            const level = parseInt(document.getElementById('troopLevel').value);
+            const troopError = document.getElementById('troopError');
+
+            troopError.textContent = '';
+
+            if (isNaN(count) || count < 0) {
+                troopError.textContent = 'Please enter a valid troop count.';
+                return;
+            }
+
+            troops.push({ type, count, level });
+            updateTroopTable();
+            saveData();
+        }
+
+        function deleteTroop(index) {
+            troops.splice(index, 1);
+            updateTroopTable();
+            saveData();
+        }
+
+        function updateTroopTable() {
+            const tableBody = document.getElementById('troopTable').getElementsByTagName('tbody')[0];
+            tableBody.innerHTML = '';
+
+            troops.forEach((troop, index) => {
+                const row = tableBody.insertRow();
+                row.insertCell(0).textContent = troop.type;
+                row.insertCell(1).textContent = troop.count;
+                row.insertCell(2).textContent = troop.level;
+                const deleteButton = document.createElement('button');
+                deleteButton.textContent = 'Delete';
+                deleteButton.onclick = () => deleteTroop(index);
+                row.insertCell(3).appendChild(deleteButton);
+            });
+        }
+		
+        function generateHeroIcons() {
+            const heroGrid = document.getElementById('heroGrid');
+            heroGrid.innerHTML = ''; // Clear previous icons
+
+            for (const heroId in heroes) {
+                if (heroes.hasOwnProperty(heroId))
+                {
+                    const hero = heroes[heroId];
+                    const heroIcon = document.createElement('div');
+                    heroIcon.classList.add('hero-icon');
+                    heroIcon.setAttribute('draggable', true);
+                    heroIcon.dataset.heroId = heroId;
+
+                    const heroImage = document.createElement('img');
+                    // Use the image property from heroData, default to a placeholder if not available
+                    heroImage.src = hero.image || 'images/placeholder.png';  // Use placeholder
+                    heroImage.alt = hero.name;
+                    heroIcon.appendChild(heroImage);
+
+                    const heroName = document.createElement('span');
+                    heroName.textContent = hero.name;
+                    heroIcon.appendChild(heroName);
+					
+					heroIcon.addEventListener('dragstart', dragStart);
+
+					heroGrid.appendChild(heroIcon);
+				}
+            }
+        }
+		
+		function addSquad() {
+            const squadCount = squads.length + 1;
+            const squadName = `Squad ${squadCount}`;
+            const squadDiv = document.createElement('div');
+            squadDiv.classList.add('squad');
+            squadDiv.innerHTML = `
+                <h3><span class="math-inline">\{squadName\}</h3\>
+<label for\="maxSize</span>{squadCount}">Max March Size:</label>
+                <input type="number" id="maxSize${squadCount}" min="0" value="0"><br>
+                <label for="isRallyCaller${squadCount}">Rally Caller:</label>
+                <input type="checkbox" id="isRallyCaller${squadCount}" onchange="updateRallyCaller(<span class="math-inline">\{squadCount\}\)"\><br\>
+<label\>Heroes\:</label\><br\>
+<div class\="hero\-slot" id\="heroSlot1\-</span>{squadCount}" ondrop="drop(event)" ondragover="allowDrop(event)"></div>
+                <div class="hero-slot" id="heroSlot2-<span class="math-inline">\{squadCount\}" ondrop\="drop\(event\)" ondragover\="allowDrop\(event\)"\></div\>
+<div class\="hero\-slot" id\="heroSlot3\-</span>{squadCount}" ondrop="drop(event)" ondragover="allowDrop(event)"></div>
+            `;
+            document.getElementById('squadsContainer').appendChild(squadDiv);
+
+            squads.push({
+                name: squadName,
+                maxSize: 0,
+                isRallyCaller: false,
+                hero1: null,
+                hero2: null,
+                hero3: null,
+                troops: [],
+            });
+
+            // Add event listeners for the new hero slots *AFTER* the elements exist and have been added to the DOM
+            const heroSlot1 = document.getElementById(`heroSlot1-${squadCount}`);
+            const heroSlot2 = document.getElementById(`heroSlot2-${squadCount}`);
+            const heroSlot3 = document.getElementById(`heroSlot3-${squadCount}`);
+
+            if (heroSlot1) {
+                heroSlot1.addEventListener('dragenter', dragEnter);
+                heroSlot1.addEventListener('dragleave', dragLeave);
+            }
+            if (heroSlot2) {
+                heroSlot2.addEventListener('dragenter', dragEnter);
+                heroSlot2.addEventListener('dragleave', dragLeave);
+            }
+            if (heroSlot3) {
+                heroSlot3.addEventListener('dragenter', dragEnter);
+                heroSlot3.addEventListener('dragleave', dragLeave);
+            }
+
+            saveData();
+        }
+		
+		
+		function dragStart(event) {
+			event.dataTransfer.setData("text/plain", event.target.dataset.heroId);
+		}
+		
+		
+		function allowDrop(event) {
+			event.preventDefault();
+		}
+		
+		
+		function dragEnter(event) {
+			if (event.target.classList.contains('hero-slot') && !event.target.classList.contains('occupied')) {
+				event.target.style.backgroundColor = 'lightgreen'; // Visual cue
+			}
+		}
+		
+		function dragLeave(event) {
+			if (event.target.classList.contains('hero-slot')) {
+				event.target.style.backgroundColor = ''; // Reset
+			}
+		}
+
+        function drop(event) {
+            event.preventDefault();
+
+            const heroId = event.dataTransfer.getData("text/plain");
+            const hero = heroes[heroId];
+            let targetSlot = event.target;
+
+            // Find the closest ancestor with the hero-slot class
+            if (!targetSlot.classList.contains('hero-slot')) {
+                targetSlot = targetSlot.closest('.hero-slot');
+            }
+
+            if (!targetSlot) {
+                return; // Not a valid drop target
+            }
+
+            // Check if the slot is already occupied
+            if (targetSlot.classList.contains('occupied')) {
+                return;
+            }
+
+            // Correctly parse squadIndex, handling potential errors robustly
+            let squadIndex = parseInt(targetSlot.id.split('-')[1]) - 1;
+            if (isNaN(squadIndex) || squadIndex < 0 || squadIndex >= squads.length) {
+                console.error("Invalid squad index:", squadIndex);
+                return; // Exit if the index is invalid
+            }
+
+            const slotIndex = parseInt(targetSlot.id.split('-')[0].replace('heroSlot', '')) - 1;
+            const squad = squads[squadIndex]; // Access squad directly
+
+            // Check hero type constraints.
+            if (squad) { // Check if squad exists (it should, but it's good practice to check)
+                if (squad.hero1 && heroes[squad.hero1] && heroes[squad.hero1].type === hero.type) {
+                    alert("Squad can only have 1 " + hero.type);
+                    return;
+                }
+                if (squad.hero2 && heroes[squad.hero2] && heroes[squad.hero2].type === hero.type) {
+                    alert("Squad can only have 1 " + hero.type);
+                    return;
+                }
+                if (squad.hero3 && heroes[squad.hero3] && heroes[squad.hero3].type === hero.type) {
+                    alert("Squad can only have 1 " + hero.type);
+                    return;
+                }
+
+                // Assign hero to the squad.
+                if (slotIndex === 0) {
+                    squad.hero1 = heroId;
+                } else if (slotIndex === 1) {
+                    squad.hero2 = heroId;
+                } else if (slotIndex === 2) {
+                    squad.hero3 = heroId;
+                }
+
+
+	            // Find the original hero icon and remove it
+	            const originalIcon = document.querySelector(`.hero-icon[data-hero-id="${heroId}"]`);
+	            if (originalIcon) {
+	                originalIcon.parentNode.removeChild(originalIcon);
+	            }
+
+	            // Create a copy of the hero icon for the slot
+	            const clonedIcon = createHeroIcon(heroId, squadIndex, slotIndex);  // Use the helper function
+                //ADD REMOVE BUTTON
+                const removeButton = document.createElement('div');
+                removeButton.classList.add('remove-hero');
+                removeButton.textContent = '-';
+                removeButton.addEventListener('click', (event) => {
+                    event.stopPropagation(); // Prevent triggering the drop event again
+                    removeHero(squadIndex, slotIndex);
+                });
+
+                targetSlot.appendChild(removeButton);
+	            targetSlot.appendChild(clonedIcon);
+	            targetSlot.classList.add('occupied');
+	            targetSlot.style.backgroundColor = ''; // Reset background
+
+            	saveData();
+			} else {
+                console.error("Squad not found for index:", squadIndex); // Debugging
+            }
+        }
+
+    function removeHero(squadIndex, slotIndex) {
+        // No need to stop propagation here, as this is not an event handler
+        const squad = squads[squadIndex];
+
+        if (isNaN(squadIndex) || squadIndex < 0 || squadIndex >= squads.length || !squad) {
+            console.error("Invalid squad index for removal:", squadIndex);
+            return;
+        }
+
+        // Get hero ID before removal
+        let heroId;
+        if (slotIndex === 0) {
+            heroId = squad.hero1;
+            squad.hero1 = null;
+        } else if (slotIndex === 1) {
+            heroId = squad.hero2;
+            squad.hero2 = null;
+        } else if (slotIndex === 2) {
+            heroId = squad.hero3;
+            squad.hero3 = null;
+        }
+
+        // Remove hero icon and removal button
+        const slot = document.getElementById(`heroSlot${slotIndex + 1}-${squadIndex + 1}`);
+        if(slot) {
+          slot.innerHTML = ''; // Clear the slot, removing both icon and button
+          slot.classList.remove('occupied');
+        }
+
+
+        // Add the hero icon back to the hero grid, if heroId is valid
+        if (heroId) {
+            const heroIcon = createHeroIcon(heroId); // Create without squad/slot data
+            heroIcon.setAttribute('draggable', true); // Make it draggable again
+            heroIcon.addEventListener('dragstart', dragStart);
+            document.getElementById('heroGrid').appendChild(heroIcon);
+        }
+
+        saveData();
+    }
+		
+        function updateRallyCaller(squadIndex) {
+            squads.forEach((squad, index) => {
+                squad.isRallyCaller = (index === squadIndex -1) && document.getElementById(`isRallyCaller${squadIndex}`).checked;
+            });
+             saveData();
+        }
+		
+		function updateSuggestedRatio() {
+			const beastType = document.getElementById('beastType').value;
+			let suggestedRatio = '9:31:60'; // Default to Bear
+
+			switch (beastType) {
+				case 'General':
+					suggestedRatio = '50:20:30';
+					break;
+				case 'Mammoth':
+					suggestedRatio = '60:10:30';
+					break;
+				case 'Rhino':
+					suggestedRatio = '30:60:10';
+					break;
+				case 'Tiger':
+					suggestedRatio = '10:30:60';
+					break;
+				case 'Ape':
+					suggestedRatio = '30:10:60';
+					break;
+				
+			}
+
+			document.getElementById('troopRatio').value = suggestedRatio;
+			saveData(); // Save the updated ratio
+		}
+		
+
+        function calculateSquads() {
+			// Clear previous results
+			const resultsBody = document.getElementById('resultsBody');
+			resultsBody.innerHTML = '';
+			document.getElementById("resultsTable").style.display = "table";
+
+            const ratioString = document.getElementById('troopRatio').value;
+            const ratioError = document.getElementById('ratioError');
+            ratioError.textContent = '';
+
+            const ratioRegex = /^\d+:\d+:\d+$/;
+            if (!ratioRegex.test(ratioString)) {
+                ratioError.textContent = 'Please enter a valid ratio in the format X:Y:Z';
+                return;
+            }
+
+            const [infantryRatio, lancerRatio, marksmanRatio] = ratioString.split(':').map(Number);
+            const totalRatio = infantryRatio + lancerRatio + marksmanRatio;
+
+            // Sort troops by level (highest first)
+            troops.sort((a, b) => b.level - a.level);
+
+
+			// Distribute to Rally Caller first.
+			let rallyCallerSquad = null;
+			for(let i=0; i<squads.length; i++) {
+				if(squads[i].isRallyCaller) {
+					rallyCallerSquad = squads[i];
+					break;
+				}
+			}
+			
+			if(rallyCallerSquad) {
+				distributeTroopsToSquad(rallyCallerSquad, infantryRatio, lancerRatio, marksmanRatio, true);				
+			}
+		
+			// Distribute to other squads, adjusting the ratio as needed.
+			for(let i=0; i< squads.length; i++) {
+				if(!squads[i].isRallyCaller) {
+					distributeTroopsToSquad(squads[i], infantryRatio, lancerRatio, marksmanRatio, false);
+				}
+			}
+			
+
+			// Display the squad
+			displaySquads();
+           
+        }
+
+		function distributeTroopsToSquad(squad, infantryRatio, lancerRatio, marksmanRatio, isRallyCaller) {
+			
+				let totalRatio = infantryRatio + lancerRatio + marksmanRatio;
+				let squadMaxSize = parseInt(document.getElementById(`maxSize${squads.indexOf(squad) + 1}`).value, 10);
+				if(isNaN(squadMaxSize)) {
+					squadMaxSize = 0; // Reset
+				}
+				squad.maxSize = squadMaxSize; //Update it.
+
+				// Clear existing troops
+				squad.troops = [];
+
+				// Helper function to calculate troops for a given type
+				function calculateTroopCounts(type, ratioPart, availableTroops, totalRatio) {
+					let idealCount = Math.floor((squadMaxSize * ratioPart) / totalRatio);
+					let actualCount = 0;
+					let troopsUsed = [];
+
+					for (let level = 11; level >= 1; level--) { // Iterate in reverse order (highest level first)
+						const availableTroopsAtLevel = availableTroops.filter(t => t.type === type && t.level === level);
+						const countAtLevel = availableTroopsAtLevel.length;
+
+						if (countAtLevel > 0) {
+							const troopsToUse = Math.min(idealCount - actualCount, countAtLevel);
+							actualCount += troopsToUse;
+
+							// Find and remove used troops from the global troops array
+							for(let i = 0; i < troopsToUse; i++){
+								for(let j = 0; j < troops.length; j++) {
+									if(troops[j].type === type && troops[j].level === level) {
+										troopsUsed.push({type: type, count: 1, level: level}); // Add to used troops
+										troops.splice(j, 1); // Remove from troops
+										break; // Stop looking once found
+									}
+								}
+							}
+
+							if (actualCount >= idealCount) {
+								break; // Stop if we've reached the ideal count
+							}
+						}
+					}
+					
+					// Group troops by level after distribution.
+					const troopsByLevel = {};
+					for(let troop of troopsUsed){
+						if (!troopsByLevel[troop.level]) {
+							troopsByLevel[troop.level] = 0;
+						}
+						troopsByLevel[troop.level]++;
+					}
+
+					return troopsByLevel;  //Return the grouped by level
+				}
+
+				// Get available troops for this squad
+				const availableInfantry = troops.filter(t => t.type === 'Infantry');
+				const availableLancers = troops.filter(t => t.type === 'Lancer');
+				const availableMarksman = troops.filter(t => t.type === 'Marksman');
+
+				
+				// Rally Caller gets perfect ratio.
+				if(isRallyCaller) {
+					squad.infantryCounts = calculateTroopCounts('Infantry', infantryRatio, availableInfantry, totalRatio);
+					squad.lancerCounts = calculateTroopCounts('Lancer', lancerRatio, availableLancers, totalRatio);
+					squad.marksmanCounts = calculateTroopCounts('Marksman', marksmanRatio, availableMarksman, totalRatio);
+				}
+				else {
+					// Adjust ratios for other squads based on availability.
+					let availableTotal = availableInfantry.reduce((sum, t) => sum + t.count, 0) +
+										 availableLancers.reduce((sum, t) => sum + t.count, 0) +
+										 availableMarksman.reduce((sum, t) => sum + t.count, 0);
+					
+					let adjInfantryRatio = availableTotal > 0 ? (availableInfantry.reduce((sum, t) => sum + t.count, 0) / availableTotal) * totalRatio : infantryRatio;
+					let adjLancerRatio = availableTotal > 0 ? (availableLancers.reduce((sum, t) => sum + t.count, 0) / availableTotal) * totalRatio : lancerRatio;
+					let adjMarksmanRatio = availableTotal > 0 ? (availableMarksman.reduce((sum, t) => sum + t.count, 0) / availableTotal) * totalRatio : marksmanRatio;
+					
+					let adjTotalRatio = adjInfantryRatio + adjLancerRatio + adjMarksmanRatio;
+
+					squad.infantryCounts = calculateTroopCounts('Infantry', adjInfantryRatio, availableInfantry, adjTotalRatio);
+					squad.lancerCounts = calculateTroopCounts('Lancer', adjLancerRatio, availableLancers, adjTotalRatio);
+					squad.marksmanCounts = calculateTroopCounts('Marksman', adjMarksmanRatio, availableMarksman, adjTotalRatio);
+				}
+		}
+
+		function displaySquads() {
+			const resultsBody = document.getElementById('resultsBody');
+
+			squads.forEach(squad => {
+				const row = resultsBody.insertRow();
+				row.insertCell(0).textContent = squad.name;
+				row.insertCell(1).textContent = squad.maxSize;
+
+				// Heroes cell
+                let heroesString = "";
+				if(squad.hero1) {
+					heroesString += heroes[squad.hero1].name + ", ";
+				}
+				if(squad.hero2) {
+					heroesString += heroes[squad.hero2].name + ", ";
+				}
+				if(squad.hero3) {
+					heroesString += heroes[squad.hero3].name;
+				}
+				
+				row.insertCell(2).textContent = heroesString;
+				
+				// Format the grouped counts
+				let infString = "";
+				for (const level in squad.infantryCounts) {
+					infString += `L${level}:${squad.infantryCounts[level]} `;
+				}
+				row.insertCell(3).textContent = infString;
+
+				let lancerString = "";
+				for (const level in squad.lancerCounts) {
+					lancerString += `L${level}:${squad.lancerCounts[level]} `;
+				}
+				row.insertCell(4).textContent = lancerString;
+				
+				let marksmanString = "";
+				for (const level in squad.marksmanCounts) {
+					marksmanString += `L${level}:${squad.marksmanCounts[level]} `;
+				}
+				row.insertCell(5).textContent = marksmanString;
+			});
+		}
+		
+
+        function exportData() {
+            const data = {
+                troops: troops,
+                squads: squads,
+                troopRatio: document.getElementById('troopRatio').value,
+				beastType: document.getElementById('beastType').value,
+				heroes: heroes,
+            };
+
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(data));
+            const downloadAnchorNode = document.createElement('a');
+            downloadAnchorNode.setAttribute("href", dataStr);
+            downloadAnchorNode.setAttribute("download", "whiteout_survival_data.json");
+            document.body.appendChild(downloadAnchorNode); // required for firefox
+            downloadAnchorNode.click();
+            downloadAnchorNode.remove();
+        }
+
+        function importData() {
+			const fileInput = document.getElementById('importFile');
+			fileInput.value = ''; // Clear previous selection
+			fileInput.onchange = () => {
+				const file = fileInput.files[0];
+				if (file) {
+					const reader = new FileReader();
+					reader.onload = function(e) {
+						try {
+							const importedData = JSON.parse(e.target.result);
+							
+							// Validate imported data
+							if (!importedData || typeof importedData !== 'object') throw new Error('Invalid data format');
+							if (!Array.isArray(importedData.troops)) throw new Error('Invalid troops data');
+							if (!Array.isArray(importedData.squads)) throw new Error('Invalid squads data');
+							if (typeof importedData.troopRatio !== 'string') throw new Error('Invalid troop ratio data');
+							if (typeof importedData.beastType !== 'string') throw new Error("Invalid beast type");
+							if (typeof importedData.heroes !== 'object') throw new Error('Invalid hero data');
+
+							// Validate troop data
+							for(const troop of importedData.troops){
+								if(typeof troop.type !== 'string' || !['Infantry', 'Lancer', 'Marksman'].includes(troop.type)) throw new Error("Invalid troop type");
+								if(typeof troop.count !== 'number' || troop.count < 0 ) throw new Error("Invalid troop count");
+								if(typeof troop.level !== 'number' || troop.level < 1 || troop.level > 11 ) throw new Error("Invalid troop level");
+							}
+							
+							// Validate squad data
+							for(const squad of importedData.squads) {
+								if(typeof squad.name !== 'string') throw new Error("Invalid squad name");
+								if(typeof squad.maxSize !== 'number' || squad.maxSize < 0) throw new Error("Invalid max size");
+								if(typeof squad.isRallyCaller !== 'boolean') throw new Error('Invalid rally caller');
+                                // Validate hero assignments in squads
+                                if (squad.hero1 && typeof squad.hero1 !== 'string') throw new Error("Invalid hero1 assignment");
+                                if (squad.hero2 && typeof squad.hero2 !== 'string') throw new Error("Invalid hero2 assignment");
+                                if (squad.hero3 && typeof squad.hero3 !== 'string') throw new Error("Invalid hero3 assignment");
+							}
+
+							// Validate hero data.  Just check if exists.
+							for(const heroId in importedData.heroes){
+								if(!heroData.hasOwnProperty(heroId)) throw new Error("Invalid Hero found");
+							}
+							
+							// If all validation checks pass, load the data
+							troops = importedData.troops;
+							squads = importedData.squads;
+							document.getElementById('troopRatio').value = importedData.troopRatio;
+							document.getElementById('beastType').value = importedData.beastType;
+							heroes = importedData.heroes;
+
+							updateTroopTable();
+							rebuildSquadUI();
+							generateHeroIcons();
+							
+							importError.textContent = '';
+							saveData(); // Save to localStorage after successful import
+							alert('Data imported successfully!');
+
+						} catch (error) {
+							document.getElementById('importError').textContent = 'Error importing data: ' + error.message;
+							console.error('Error importing data:', error);
+						}
+					};
+					reader.readAsText(file);
+				}
+			};
+			fileInput.click(); // Trigger file selection
+        }
+
+		function rebuildSquadUI() {
+			const squadsContainer = document.getElementById('squadsContainer');
+			squadsContainer.innerHTML = ''; // Clear existing squads
+
+			squads.forEach((squad, index) => {
+				const squadCount = index + 1;
+				const squadDiv = document.createElement('div');
+				squadDiv.classList.add('squad');
+				squadDiv.innerHTML = `
+					<h3>${squad.name}</h3>
+					<label for="maxSize${squadCount}">Max March Size:</label>
+					<input type="number" id="maxSize${squadCount}" min="0" value="${squad.maxSize}"><br>
+					<label for="isRallyCaller${squadCount}">Rally Caller:</label>
+					<input type="checkbox" id="isRallyCaller${squadCount}" onchange="updateRallyCaller(${squadCount})" ${squad.isRallyCaller ? 'checked' : ''}><br>
+					 <label>Heroes:</label><br>
+					<div class="hero-slot" id="heroSlot1-${squadCount}" ondrop="drop(event)" ondragover="allowDrop(event)"></div>
+					<div class="hero-slot" id="heroSlot2-${squadCount}" ondrop="drop(event)" ondragover="allowDrop(event)"></div>
+					<div class="hero-slot" id="heroSlot3-${squadCount}" ondrop="drop(event)" ondragover="allowDrop(event)"></div>
+					
+				`;
+				squadsContainer.appendChild(squadDiv);
+				
+				// Add drag and drop *AFTER* the elements are added to the DOM
+                const heroSlot1 = document.getElementById(`heroSlot1-${squadCount}`);
+                const heroSlot2 = document.getElementById(`heroSlot2-${squadCount}`);
+                const heroSlot3 = document.getElementById(`heroSlot3-${squadCount}`);
+
+                if (heroSlot1) {
+                    heroSlot1.addEventListener('dragenter', dragEnter);
+                    heroSlot1.addEventListener('dragleave', dragLeave);
+                }
+                if (heroSlot2) {
+                    heroSlot2.addEventListener('dragenter', dragEnter);
+                    heroSlot2.addEventListener('dragleave', dragLeave);
+                }
+                if (heroSlot3) {
+                    heroSlot3.addEventListener('dragenter', dragEnter);
+                    heroSlot3.addEventListener('dragleave', dragLeave);
+                }
+				
+				// Re-populate hero slots if heroes are assigned
+                
+				if (squad.hero1) {
+					const heroIcon = createHeroIcon(squad.hero1, index, 0); // 0 for slot index
+                    const removeButton = document.createElement('div');
+                    removeButton.classList.add('remove-hero');
+                    removeButton.textContent = '-';
+                    removeButton.addEventListener('click', (event) => {
+                        event.stopPropagation();
+                        removeHero(index, 0);
+                    });
+                    heroSlot1.appendChild(removeButton);
+					heroSlot1.appendChild(heroIcon);
+
+					heroSlot1.classList.add('occupied');
+
+				}
+                
+				if (squad.hero2) {
+					const heroIcon = createHeroIcon(squad.hero2, index, 1);
+                    const removeButton = document.createElement('div');
+                    removeButton.classList.add('remove-hero');
+                    removeButton.textContent = '-';
+                    removeButton.addEventListener('click', (event) => {
+                        event.stopPropagation();
+                        removeHero(index, 1);
+                    });
+                    heroSlot2.appendChild(removeButton);
+					heroSlot2.appendChild(heroIcon);
+					heroSlot2.classList.add('occupied');
+				}
+                
+				if (squad.hero3) {
+                    const heroIcon = createHeroIcon(squad.hero3, index, 2);
+					const removeButton = document.createElement('div');
+                    removeButton.classList.add('remove-hero');
+                    removeButton.textContent = '-';
+                    removeButton.addEventListener('click', (event) => {
+                      event.stopPropagation(); // Prevent triggering the drop event again
+                      removeHero(index, 2); // Pass squadIndex and slotIndex
+                    });
+                    heroSlot3.appendChild(removeButton);
+					heroSlot3.appendChild(heroIcon);
+					heroSlot3.classList.add('occupied');
+				}
+			});
+		}
+
+        function createHeroIcon(heroId, squadIndex, slotIndex) {
+            const hero = heroes[heroId];
+            const heroIcon = document.createElement('div');
+            heroIcon.classList.add('hero-icon');
+            heroIcon.setAttribute('draggable', false);  // Initially not draggable
+            heroIcon.dataset.heroId = heroId;
+            if (squadIndex !== undefined) { // Only set if it's in a squad
+                heroIcon.dataset.squadIndex = squadIndex;
+            }
+            if (slotIndex !== undefined) {
+              heroIcon.dataset.slotIndex = slotIndex;
+            }
+
+
+            const heroImage = document.createElement('img');
+            // Use hero.image if it exists, otherwise use a placeholder
+            heroImage.src = hero.image || 'images/placeholder.png'; // Provide a placeholder image
+            heroImage.alt = hero.name;
+            heroIcon.appendChild(heroImage);
+
+            const heroName = document.createElement('span');
+            heroName.textContent = hero.name;
+            heroIcon.appendChild(heroName);
+
+            return heroIcon;
+        }
+		
+
+        function saveData() {
+            const data = {
+                troops: troops,
+                squads: squads,
+                troopRatio: document.getElementById('troopRatio').value,
+				beastType: document.getElementById('beastType').value,
+				heroes: heroes
+            };
+            localStorage.setItem('whiteoutSurvivalData', JSON.stringify(data));
+        }
+
+        function loadData() {
+            const dataString = localStorage.getItem('whiteoutSurvivalData');
+            if (dataString) {
+                const data = JSON.parse(dataString);
+                troops = data.troops || [];
+                squads = data.squads || [];
+				
+                document.getElementById('troopRatio').value = data.troopRatio || '9:31:60';
+				document.getElementById('beastType').value = data.beastType || 'Bear';
+				heroes = data.heroes || {};
+				// Check if heroes exist in localStorage, if not, initialize them
+                if (Object.keys(heroes).length === 0) {
+                     initializeHeroes();
+                }
+                updateTroopTable();
+				rebuildSquadUI(); // Rebuild the squad UI
+				generateHeroIcons();
+
+            }
+			else {
+                // If no data in localStorage, add initial squad and populate default heroes
+                addSquad();
+                initializeHeroes();
+			}
+        }
+		
+		function initializeHeroes() {
+            heroes = {}; // Clear any existing heroes
+            for (const heroId in heroData) {
+                if (heroData.hasOwnProperty(heroId)) {
+                    heroes[heroId] = { ...heroData[heroId] };  // important: use the spread operator (...) to make *copies*
+                }
+            }
+            generateHeroIcons(); // Rebuild hero icons after initializing
+            saveData();
+        }
+
+        // Load data on page load
+        loadData();
+
+    </script>
+</body>
+</html>
