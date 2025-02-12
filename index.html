@@ -196,44 +196,47 @@
     <script>
         let troops = [];
         let squads = [];
+        //  REPLACE 'your-username' and 'your-repo-name' with your actual GitHub username and repository name.
+        const baseURL = 'https://your-username.github.io/your-repo-name'; //  Base URL for GitHub Pages
+
         let heroData = {
-            "Natalia": { name: "Natalia", type: "Infantry", image: "https://drive.google.com/file/d/1i4d1-KE5Sz5S4EqzwH6Fe_9ZvRgIJGI6/view?usp=sharing" },
-            "Sergey": { name: "Sergey", type: "Infantry", image: "https://drive.google.com/file/d/1yWDj333cLwVClc98l-iVp1hNg5x8wZaE/view?usp=sharing" },
-            "Jasser": { name: "Jasser", type: "Marksman", image: "https://drive.google.com/file/d/15c0Z63yZgi6Ik3jwED_F6BF2L2DYXnLX/view?usp=sharing" },
-            "Molly": { name: "Molly", type: "Lancer", image: "" }, // Add image URL if available
-            "Bahiti": { name: "Bahiti", type: "Marksman", image: "https://drive.google.com/file/d/1dTjv-a2aOlJ8TnIa3JVMVGxTGJiCoHjj/view?usp=sharing" },
-            "Zinman": { name: "Zinman", type: "Marksman", image: "https://drive.google.com/file/d/1nA7XATmyfBgLNLCTUqN0IeP5KD6qIIvS/view?usp=sharing" },
-            "Chef": { name: "Chef", type: "Infantry", image: "" },  // Add image
-            "Buster": { name: "Buster", type: "Infantry", image: "" }, //add image
-            "Cloris": { name: "Cloris", type: "Marksman", image: "https://drive.google.com/file/d/1i3RhXv-kXCfOhpnP7EGFBcf4aCARiW9N/view?usp=sharing" },
-            "Smith": { name: "Smith", type: "Infantry", image: "https://drive.google.com/file/d/1Xb2s-g9VMeZJ1lanJlbYhJFdrROB5jNj/view?usp=sharing" },
-            "Alisa": { name: "Alisa", type: "Infantry", image: "" },  //add image
-            "Charlie": { name: "Charlie", type: "Lancer", image: "https://drive.google.com/file/d/10GHmDLVqKEWlDJ_ofL1Y_CX7HUN0ZcHz/view?usp=sharing" },
-            "Patrick": { name: "Patrick", type: "Infantry", image: "https://drive.google.com/file/d/1ItOsmi7ejXt-eFZRR_3ynddE6SPwS4d0/view?usp=sharing" },
-            "Bradley": { name: "Bradley", type: "Marksman", image: "" }, //add image
-            "Edith": { name: "Edith", type: "Infantry", image: "" },   //add image
-            "Hector": { name: "Hector", type: "Infantry", image: "https://drive.google.com/file/d/1WbxnfTdaM9HWtoATCtF35UENH8c0iWKe/view?usp=sharing" },
-            "Lynn": { name: "Lynn", type: "Marksman", image: "https://drive.google.com/file/d/1ANrvDcMOkcaYr1j0Mf96Y_pfjvVBpG5t/view?usp=sharing" },
-            "Mia": { name: "Mia", type: "Lancer", image: "https://drive.google.com/file/d/1nXJhv_6qfndRZ8HjdQIOqgGXswZAY8kK/view?usp=sharing" },
-            "Logan": { name: "Logan", type: "Infantry", image: "https://drive.google.com/file/d/1dEkeuwXTzz-_TONPBBLE8IuUYugKUocz/view?usp=sharing" },
-            "Renee": { name: "Renee", type: "Lancer", image: "https://drive.google.com/file/d/1j10mCQrZCahKT2-818_-UPblZEymPhyA/view?usp=sharing" },
-            "Jeronimo": { name: "Jeronimo", type: "Infantry", image: "https://drive.google.com/file/d/1roYgMfNwPRCi7IapaKspZziny4iAi9Yx/view?usp=sharing" },
-            "Wu Ming": { name: "Wu Ming", type: "Infantry", image: "https://drive.google.com/file/d/108NmCUC7X6ZlnJDryhb20u9wik7oR5F_/view?usp=sharing" },
-            "Wayne": { name: "Wayne", type: "Marksman", image: "https://drive.google.com/file/d/1ucs5kyTemWemcfgXHTo_2V19oulPYFWj/view?usp=sharing" },
-            "Norah": { name: "Norah", type: "Lancer", image: "https://drive.google.com/file/d/1unltvsFPxFHgoB71R2q8CKooz-ukc9lM/view?usp=sharing" },
-            "Ahmose": { name: "Ahmose", type: "Infantry", image: "https://drive.google.com/file/d/1JW6ZMcG-83xLnMxZVqQ25CYINgaDuYdo/view?usp=sharing" },
-            "Philly": { name: "Philly", type: "Lancer", image: "https://drive.google.com/file/d/1rhoC9VKNyp-IAecu4g2Fz0SIrlq6m1Pl/view?usp=sharing" },
-            "Gwen": { name: "Gwen", type: "Marksman", image: "https://drive.google.com/file/d/1HkWDY3UxdG0gD-d8yFmX5AqpH65z76PL/view?usp=sharing" },
-            "Reina": { name: "Reina", type: "Lancer", image: "https://drive.google.com/file/d/19D4mkJKcpd2XX0Whg6VzEELiqhW2MKHy/view?usp=sharing" },
-            "Gordon": { name: "Gordon", type: "Lancer", image: "" },  //add image
-            "Greg": { name: "Greg", type: "Marksman", image: "https://drive.google.com/file/d/1WvT2ILMs_vEDSsWHKyS9I-QI_Wi3CAXV/view?usp=sharing" },
-            "Flint": { name: "Flint", type: "Infantry", image: "https://drive.google.com/file/d/1jNfjkO-VwWLqXSBSpPCYBZyk_TqMhh1e/view?usp=sharing" },
-            "Alonso": { name: "Alonso", type: "Marksman", image: "https://drive.google.com/file/d/10Zy7AFRiNU-OSLjqpBbezQvL-Q1LyBKX/view?usp=sharing" },
-            "Seo-yoon": { name: "Seo-yoon", type: "Marksman", image: "https://drive.google.com/file/d/1rqrsmJxGAJU-CIleXOOtiocPacPN7XZE/view?usp=sharing" },
-            "Walis Bokan": { name: "Walis Bokan", type: "Lancer", image: "https://drive.google.com/file/d/1i97Y_-wjHpq-zqAbG-Uf1Ss-0OqG216W/view?usp=sharing" },
-            "Jessie": { name: "Jessie", type: "Lancer", image: "https://drive.google.com/file/d/1P_jbvq_hKPZXdlDYWVOIA4Df_qtfi_0A/view?usp=sharing" },
-            "Gina": { name: "Gina", type: "Marksman", image: "https://drive.google.com/file/d/1l0to7sgvgF7HtpXf0YJeEDQgIb7H9EhQ/view?usp=sharing" },
-            "Eugene": { name: "Eugene", type: "Infantry", image: "https://drive.google.com/file/d/1IZ7d3RHJPC0Q3n7Mtp6Qlk-oxUBE8qHi/view?usp=sharing" },
+           "Natalia": { name: "Natalia", type: "Infantry", image: `${baseURL}/images/natalia.png` },
+            "Sergey": { name: "Sergey", type: "Infantry", image: `${baseURL}/images/sergey.png` },
+            "Jasser": { name: "Jasser", type: "Marksman", image: `${baseURL}/images/jasser.png` },
+            "Molly": { name: "Molly", type: "Lancer", image: `${baseURL}/images/molly.png` },
+            "Bahiti": { name: "Bahiti", type: "Marksman", image: `${baseURL}/images/bahiti.png` },
+            "Zinman": { name: "Zinman", type: "Marksman", image: `${baseURL}/images/zinman.png` },
+            "Chef": { name: "Chef", type: "Infantry", image: `${baseURL}/images/chef.png` },
+            "Buster": { name: "Buster", type: "Infantry", image: `${baseURL}/images/buster.png` },
+            "Cloris": { name: "Cloris", type: "Marksman", image: `${baseURL}/images/cloris.png` },
+            "Smith": { name: "Smith", type: "Infantry", image: `${baseURL}/images/smith.png` },
+            "Alisa": { name: "Alisa", type: "Infantry", image: `${baseURL}/images/alisa.png` },
+            "Charlie": { name: "Charlie", type: "Lancer", image: `${baseURL}/images/charlie.png` },
+            "Patrick": { name: "Patrick", type: "Infantry", image: `${baseURL}/images/patrick.png` },
+            "Bradley": { name: "Bradley", type: "Marksman", image: `${baseURL}/images/bradley.png` },
+            "Edith": { name: "Edith", type: "Infantry", image: `${baseURL}/images/edith.png` },
+            "Hector": { name: "Hector", type: "Infantry", image: `${baseURL}/images/hector.png` },
+            "Lynn": { name: "Lynn", type: "Marksman", image: `${baseURL}/images/lynn.png` },
+            "Mia": { name: "Mia", type: "Lancer", image: `${baseURL}/images/mia.png` },
+            "Logan": { name: "Logan", type: "Infantry", image: `${baseURL}/images/logan.png` },
+            "Renee": { name: "Renee", type: "Lancer", image: `${baseURL}/images/renee.png` },
+            "Jeronimo": { name: "Jeronimo", type: "Infantry", image: `${baseURL}/images/jeronimo.png` },
+            "Wu Ming": { name: "Wu Ming", type: "Infantry", image: `${baseURL}/images/wu-ming.png` },
+            "Wayne": { name: "Wayne", type: "Marksman", image: `${baseURL}/images/wayne.png` },
+            "Norah": { name: "Norah", type: "Lancer", image: `${baseURL}/images/norah.png` },
+            "Ahmose": { name: "Ahmose", type: "Infantry", image: `${baseURL}/images/ahmose.png` },
+            "Philly": { name: "Philly", type: "Lancer", image: `${baseURL}/images/philly.png` },
+            "Gwen": { name: "Gwen", type: "Marksman", image: `${baseURL}/images/gwen.png` },
+            "Reina": { name: "Reina", type: "Lancer", image: `${baseURL}/images/reina.png` },
+            "Gordon": { name: "Gordon", type: "Lancer", image: `${baseURL}/images/gordon.png` },
+            "Greg": { name: "Greg", type: "Marksman", image: `${baseURL}/images/greg.png` },
+            "Flint": { name: "Flint", type: "Infantry", image: `${baseURL}/images/flint.png` },
+            "Alonso": { name: "Alonso", type: "Marksman", image: `${baseURL}/images/alonso.png` },
+            "Seo-yoon": { name: "Seo-yoon", type: "Marksman", image: `${baseURL}/images/seo-yoon.png` },
+            "Walis Bokan": { name: "Walis Bokan", type: "Lancer", image: `${baseURL}/images/walis-bokan.png` },
+            "Jessie": { name: "Jessie", type: "Lancer", image: `${baseURL}/images/jessie.png` },
+            "Gina": { name: "Gina", type: "Marksman", image: `${baseURL}/images/gina.png` },
+            "Eugene": { name: "Eugene", type: "Infantry", image: `${baseURL}/images/eugene.png` },
         };
 		let heroes = {};
 
@@ -292,7 +295,7 @@
 
                     const heroImage = document.createElement('img');
                     // Use the image property from heroData, default to a placeholder if not available
-                    heroImage.src = hero.image || 'images/placeholder.png';  // Use placeholder
+                    heroImage.src = hero.image || `${baseURL}/images/placeholder.png`;  // Use placeholder
                     heroImage.alt = hero.name;
                     heroIcon.appendChild(heroImage);
 
@@ -369,7 +372,8 @@
 		
 		function dragEnter(event) {
 			if (event.target.classList.contains('hero-slot') && !event.target.classList.contains('occupied')) {
-				event.target.style.backgroundColor = 'lightgreen'; // Visual cue
+				event.target.style.backgroundColor = 'lightgreen';
+                // Visual cue
 			}
 		}
 		
@@ -383,6 +387,11 @@
             event.preventDefault();
 
             const heroId = event.dataTransfer.getData("text/plain");
+             // Check if heroId is valid (exists in heroes)
+            if (!heroes[heroId]) {
+                console.error("Invalid hero ID:", heroId);
+                return;
+            }
             const hero = heroes[heroId];
             let targetSlot = event.target;
 
@@ -403,7 +412,7 @@
             // Correctly parse squadIndex, handling potential errors robustly
             let squadIndex = parseInt(targetSlot.id.split('-')[1]) - 1;
             if (isNaN(squadIndex) || squadIndex < 0 || squadIndex >= squads.length) {
-                console.error("Invalid squad index:", squadIndex);
+                console.error("Invalid squad index:", squadIndex, targetSlot.id);
                 return; // Exit if the index is invalid
             }
 
@@ -682,7 +691,7 @@
 				row.insertCell(1).textContent = squad.maxSize;
 
 				// Heroes cell
-                let heroesString = "";
+				let heroesString = "";
 				if(squad.hero1) {
 					heroesString += heroes[squad.hero1].name + ", ";
 				}
@@ -756,13 +765,14 @@
 
 							// Validate troop data
 							for(const troop of importedData.troops){
-								if(typeof troop.type !== 'string' || !['Infantry', 'Lancer', 'Marksman'].includes(troop.type)) throw new Error("Invalid troop type");
+								if(typeof troop.type !== 'string'
+								|| !['Infantry', 'Lancer', 'Marksman'].includes(troop.type)) throw new Error("Invalid troop type");
 								if(typeof troop.count !== 'number' || troop.count < 0 ) throw new Error("Invalid troop count");
 								if(typeof troop.level !== 'number' || troop.level < 1 || troop.level > 11 ) throw new Error("Invalid troop level");
 							}
 							
 							// Validate squad data
-							for(const squad of importedData.squads) {
+							for (const squad of importedData.squads) {
 								if(typeof squad.name !== 'string') throw new Error("Invalid squad name");
 								if(typeof squad.maxSize !== 'number' || squad.maxSize < 0) throw new Error("Invalid max size");
 								if(typeof squad.isRallyCaller !== 'boolean') throw new Error('Invalid rally caller');
@@ -843,7 +853,7 @@
                     heroSlot3.addEventListener('dragleave', dragLeave);
                 }
 				
-				// Re-populate hero slots if heroes are assigned
+				// Re-populate hero slots if heroes are assigned.  Add remove buttons.
                 
 				if (squad.hero1) {
 					const heroIcon = createHeroIcon(squad.hero1, index, 0); // 0 for slot index
@@ -907,7 +917,7 @@
 
             const heroImage = document.createElement('img');
             // Use hero.image if it exists, otherwise use a placeholder
-            heroImage.src = hero.image || 'images/placeholder.png'; // Provide a placeholder image
+            heroImage.src = hero.image || `${baseURL}/images/placeholder.png`; // Provide a placeholder image
             heroImage.alt = hero.name;
             heroIcon.appendChild(heroImage);
 
@@ -958,7 +968,7 @@
 		
 		function initializeHeroes() {
             heroes = {}; // Clear any existing heroes
-            for (const heroId in heroData) {
+			for (const heroId in heroData) {
                 if (heroData.hasOwnProperty(heroId)) {
                     heroes[heroId] = { ...heroData[heroId] };  // important: use the spread operator (...) to make *copies*
                 }
